@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welsh Rock Cannons Map</title>
+    <!-- leaflet css -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!--page of openmap -->
+    <div id="a">
+        <h1>Welsh Rock Cannons</h1>
+        <p>North Wales Historical Sites Interactive Map</p >
+        <!-- A1 - Open map button -->
+        <button id="a1">Open Map</button>
+    </div>
+
+    <!-- map page -->
+    <div id="b">
+        <!-- layout  -->
+        <div id="b1">
+            <!-- Left panel search and introduce -->
+            <div id="b2">
+                <!-- Search  -->
+                <input type="text" id="b21" placeholder="Search rock cannon sites...">
+                <p id="b22">No results found</p >
+                <h3>About Rock Cannons</h3>
+                <p>English: Rock cannon</p >
+                <p>Welsh: Carreg cannan / cerrig cannan</p >
+                <p>A traditional celebration device in North Wales, made by drilling holes in big rocks and filling with black powder.</p >
+                <p>235 sites were recorded in Gwynedd by 2001.</p >
+                <p>Used for weddings, royal visits and festivals in the 18th-19th centuries.</p >
+            </div>
+            <!--Main map container -->
+            <div id="b3"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Fields: name, welshName, lat, lng, holeCount, type, history, manufacture
+        var rockCannonSites = [
+            {
+                name: "Pont-y-Pair Rock Cannon",
+                welshName: "Carreg Cannan Pont-y-Pair",
+                lat: 53.09419,
+                lng: -3.80659,
+                holeCount: 53,
+                type: "Public Heritage Site",
+                history: "Near Pont-y-Pair Bridge in Betws-y-coed (Conwy), the most famous rock cannon in North Wales. 53 holes cover 9.25m × 3.22m, a key spot on the waterfall trail with clearly visible drill holes and powder grooves. A classic 19th century community celebration device.",
+                manufacture: "Holes drilled into natural riverbank rock, connected by shallow grooves for continuous explosion sequence. Holes with diameter of several centimeters, designed for optimal sound propagation in the valley."
+            },
+            {
+                name: "Nannau Estate Rock Cannon",
+                welshName: "Carreg Cannan Nannau",
+                lat: 52.75,
+                lng: -3.9,
+                holeCount: 21,
+                type: "Estate Heritage Site",
+                history: "Built in 1824 for the 21st birthday of Baron Robert Williames Vaughan III, on Foel Cynwch and Foel Offrwm hills near Dolgellau (Gwynedd). 21 shots fired at dawn, echoing with Cader Idris mountain. Holes well-preserved after over 200 years, a typical aristocratic celebration example.",
+                manufacture: "Vertical deep holes drilled into mountain rock, no connecting grooves, sequential detonation of individual holes. Gunpowder fixed with goose fat to ensure stable ignition sequence."
+            },
+            {
+                name: "Mynydd Llandegai Rock Cannon",
+                welshName: "Carreg Cannan Mynydd Llandegai",
+                lat: 53.16504,
+                lng: -4.07924,
+                holeCount: 42,
+                type: "Quarry Community Site",
+                history: "Located in Gefnan slate quarry (Gwynedd), a representative of quarry workers' rock cannons. Built in 19th century with professional drilling tools, used for quarry milestones, royal visits and other major events, serving as an important symbol of collective celebration in worker communities.",
+                manufacture: "Regular and uniform deep holes drilled with mechanical assistance, gunpowder load adapted to quarry sound propagation. Holes arranged in a line for continuous explosion effect."
+            },
+            {
+                name: "Moel-y-Gest Rock Cannon",
+                welshName: "Carreg Cannan Moel-y-Gest",
+                lat: 52.9278,
+                lng: -4.1588,
+                holeCount: 37,
+                type: "Hillside Estate Site",
+                history: "On Morfa Bychan hillside near Porthmadog (Gwynedd), a private estate celebration device for VIP receptions and festivals. Coastal hillside location makes explosion sound echo across coast and valley, with spectacular audio-visual effects.",
+                manufacture: "Inclined holes drilled along the hillside trend, exposed rock surface for better sound diffusion. Shallow grooves connect partial holes for staged explosion sequence."
+            },
+            {
+                name: "Parc Bron y Graig Rock Cannon",
+                welshName: "Carreg Cannan Parc Bron y Graig",
+                lat: 52.863,
+                lng: -4.110,
+                holeCount: 5,
+                type: "Small Community Site",
+                history: "Located in Harlech (Gwynedd), one of the few small rock cannons in North Wales with only 5 holes. Designed for small-scale community events like weddings and local festivals, reflecting the diverse usage scenarios of rock cannons.",
+                manufacture: "Small independent rock holes with no connecting grooves, individual detonation for easy operation. Suitable for small community celebrations with low gunpowder usage."
+            },
+            {
+                name: "Trefriw Rock Cannon",
+                welshName: "Carreg Cannan Trefriw",
+                lat: 53.18,
+                lng: -3.82,
+                holeCount: 13,
+                type: "Forest Heritage Site",
+                history: "Built in 1863 specifically to celebrate the wedding of the Prince of Wales, with 13 holes. The site is now hidden in the forest near Trefriw (Conwy), an important witness of rock cannons used for national celebrations, recording the grand scene of royal celebrations in 19th century Wales.",
+                manufacture: "Rock holes connected by shallow grooves to achieve 15-second continuous chain explosion. Gunpowder trajectory fixed with goose fat to ensure stable and sequential ignition."
+            },
+            {
+                name: "Parys Mountain Rock Cannon",
+                welshName: "Carreg Cannan Mynydd Parys",
+                lat: 53.38,
+                lng: -4.34,
+                holeCount: 18,
+                type: "Ancient Copper Mine Site",
+                history: "The oldest recorded rock cannon in Wales (1797), located in Parys Mountain Copper Mine (Anglesey) with at least 3 remaining sites. As a scheduled ancient monument, it witnesses the origin of Welsh rock cannon culture.",
+                manufacture: "Hand-carved original deep holes without later modification, the most primitive construction form of early rock cannons, providing a reference for subsequent rock cannon production."
+            },
+            {
+                name: "Cwm Eigiau Rock Cannon",
+                welshName: "Carreg Cannan Cwm Eigiau",
+                lat: 53.12,
+                lng: -3.98,
+                holeCount: 29,
+                type: "Hiking Trail Site",
+                history: "Located near slate quarry along Eryri National Park hiking trail (Gwynedd), a popular spot for hikers to explore rock cannon sites. The site is well-preserved with beautiful surrounding natural scenery, allowing close observation of drill hole details.",
+                manufacture: "Multiple groups of independent holes arranged with clear powder grooves, combining practicality and aesthetics in construction, a typical representative of quarry area rock cannons."
+            }
+        ];
+
+        var a = document.getElementById('a');
+        var b = document.getElementById('b');
+        var a1 = document.getElementById('a1');
+        var mapIsInited = false; 
+
+        // button change to map screen 
+        a1.onclick = function() {
+            a.style.display = 'none';
+            b.style.display = 'block';
+            if (!mapIsInited) {
+                initMap();
+                mapIsInited = true;
+            }
+        }
+
+        // map function
+        function initMap() {
+            // Create map 
+            var map = L.map('b3').setView([53.05, -3.95], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            var allMarkers = []; // Store  marker for searching
+            for (var i = 0; i < rockCannonSites.length; i++) {
+                var site = rockCannonSites[i];
+                var marker = L.marker([site.lat, site.lng]).addTo(map);
+                marker.siteData = site;
+                allMarkers.push(marker);
+
+                //  matching style
+                marker.bindPopup(
+                    "<div class='c'>" +
+                    "<h3>" + site.name + "</h3>" +
+                    "<p class='c1'>" + site.welshName + "</p >" +
+                    "<p><strong>Latitude:</strong> " + site.lat + "</p >" +
+                    "<p><strong>Longitude:</strong> " + site.lng + "</p >" +
+                    "<p><strong>Number of Holes:</strong> " + site.holeCount + "</p >" +
+                    "<p><strong>Site Type:</strong> " + site.type + "</p >" +
+                    "<hr>" +
+                    "<p><strong>History:</strong> " + site.history + "</p >" +
+                    "<p><strong>Manufacture:</strong> " + site.manufacture + "</p >" +
+                    "</div>"
+                );
+            }
+
+            // Search function 
+            var b21 = document.getElementById('b21');
+            var b22 = document.getElementById('b22');
+            b21.oninput = function(e) {
+                var keyword = e.target.value.trim().toLowerCase();
+                var hasResult = false;
+
+                for (var j = 0; j < allMarkers.length; j++) {
+                    var mark = allMarkers[j];
+                    var data = mark.siteData;
+                    var isMatch = data.name.toLowerCase().includes(keyword);
+
+                    if (keyword === "") {
+                        mark.setOpacity(1);
+                        b22.style.display = 'none';
+                    } else if (isMatch) {
+                        mark.setOpacity(1);
+                        mark.openPopup();
+                        map.setView([data.lat, data.lng], 14);
+                        hasResult = true;
+                        b22.style.display = 'none';
+                    } else {
+                        mark.setOpacity(0);
+                    }
+                }
+                if (keyword !== "" && !hasResult) {
+                    b22.style.display = 'block';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
