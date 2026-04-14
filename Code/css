@@ -1,0 +1,98 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* A -  page of openmap */
+#a {
+    text-align: center;
+    padding-top: 200px;
+    background: #f9f9f9;
+    height: 100vh;
+}
+#a h1 {
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+#a p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 30px;
+}
+/* A1 - Open map button */
+#a1 {
+    padding: 10px 30px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+#a1:hover {
+    background: #0056b3;
+}
+
+/* B - map page */
+#b {
+    display: none;
+    height: 100vh;
+}
+/* B1 -  layout for B2 + B3 */
+#b1 {
+    display: flex;
+    height: 100%;
+}
+
+/* B2 - Left panel search and introduce */
+#b2 {
+    width: 300px;
+    padding: 20px;
+    background: #fff;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+}
+/* B21 - Search input */
+#b21 {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+/* B22 -no Search   */
+#b22 {
+    color: red;
+    font-size: 12px;
+    display: none;
+    margin-bottom: 20px;
+}
+#b2 h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+#b2 p {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+/* B3 - Main map container */
+#b3 {
+    flex: 1;
+    height: 100%;
+}
+
+/* C - Map popup style */
+.c {
+    width: 300px !important;
+    font-size: 14px;
+}
+.c h3 {
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+/* C1 - Welsh name style in popup */
+.c1 {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
