@@ -4,14 +4,8 @@ html, body {
   font-family: system-ui;
 }
 
-body {
-  background-color: #222;
-  color: #eee;
-}
-
 /* MAP */
 #map {
-  background-color: #222;
   height: 100%;
   width: 100%;
   z-index: 0;
@@ -31,7 +25,7 @@ body {
   align-items: center;
   gap: 12px;
 
-  background: #444;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
 
   padding: 12px 14px;
@@ -53,12 +47,6 @@ body {
   padding: 10px 12px;
 
   border-radius: 12px;
-  background-color: #666;
-  color: white
-}
-
-#searchInput::placeholder {
-  color: #ccc;
 }
 
 /* FILTER */
@@ -70,8 +58,7 @@ body {
   padding: 10px;
 
   border-radius: 12px;
-  background: #444;
-  color: #eee
+  background: white;
 }
 
 /* =========================
@@ -106,8 +93,8 @@ body {
   height: 38px;
   border-radius: 50%;
 
-  background: #eee;
-  color:#333;
+  background: #333;
+  color: white;
 
   display: flex;
   align-items: center;
