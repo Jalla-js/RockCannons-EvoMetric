@@ -321,7 +321,9 @@ html, body {
 /* UTILITY */
 .hidden {
   display: none;
-}.leaflet-control-zoom{
+}
+
+.leaflet-control-zoom{
   display: none;
 }
 
