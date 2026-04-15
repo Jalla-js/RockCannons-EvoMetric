@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Site</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="db.js" defer></script>
+</head>
+
+<body>
+
+<h1>Add Rock Cannon</h1>
+
+<form id="form">
+
+  <input id="name" placeholder="Site name" required />
+
+  <input id="lat" placeholder="Latitude" required />
+  <input id="lng" placeholder="Longitude" required />
+
+  <!-- 🧠 DESCRIPTION FIELD -->
+  <textarea id="descEng" placeholder="Description (English)" required></textarea>
+  <textarea id="descWel" placeholder="Description (Welsh)"></textarea>
+
+  <!-- 🕳️ HOLE COUNT FIELD -->
+  <input id="holeCount" type="number" placeholder="Hole count (optional)" />
+  <input type="file" id="imageUpload" multiple accept="image/*">
+  <button type="submit">Add Site</button>
+
+</form>
+<script>
+    const role = await getUserRole();
+
+if (!role) {
+  alert("Please log in");
+  window.location.href = "login.html";
+}
+
+if (role !== "contributor" && role !== "admin") {
+  alert("You are not allowed to add sites");
+  window.location.href = "map.html";
+}
+    document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const descEng = document.getElementById('descEng').value;
+  const descWel = document.getElementById('descWel').value;
+
+  let holeCount = document.getElementById('holeCount').value;
+  holeCount = holeCount === "" ? -1 : parseInt(holeCount);
+
+  // 1️⃣ CREATE SITE FIRST
+  const { data: siteData, error: siteError } = await sb
+    .from("sites")
+    .insert([{
+      name: document.getElementById('name').value,
+      latitude: parseFloat(document.getElementById('lat').value),
+      longitude: parseFloat(document.getElementById('lng').value),
+
+      description: JSON.stringify({
+        descEng,
+        descWel,
+        holeCount
+      }),
+
+      status: "pending"
+    }])
+    .select()
+    .single();
+
+  if (siteError) {
+    console.error(siteError);
+    alert("Site error: " + siteError.message);
+    return;
+  }
+
+  const siteId = siteData.site_id;
+
+  // 2️⃣ UPLOAD IMAGES
+  const files = document.getElementById("imageUpload").files;
+
+  for (let file of files) {
+
+    const fileName = `${siteId}-${Date.now()}-${file.name}`;
+
+    const { error: uploadError } = await sb.storage
+      .from("site-images")
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error(uploadError);
+      continue;
+    }
+
+    const { data } = sb.storage
+      .from("site-images")
+      .getPublicUrl(fileName);
+
+    // 3️⃣ SAVE TO PHOTOS TABLE
+    await sb.from("photos").insert([{
+      site_id: siteId,
+      image_url: data.publicUrl,
+      caption: null
+    }]);
+  }
+
+  alert("Submitted for approval!");
+  window.location.href = "map.html";
+});
+</script>
+<script>
+console.log("PAGE LOADED");
+</script>
+</body>
+</html>
