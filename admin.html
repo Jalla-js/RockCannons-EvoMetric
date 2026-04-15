@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Review</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="db.js"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body { font-family: system-ui; margin: 0; padding: 20px; }
+
+    .card {
+      max-width: 600px;
+      margin: auto;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    button {
+      padding: 10px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .approve { background: #2ecc71; color: white; }
+    .reject { background: #e74c3c; color: white; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+
+<div id="container" class="card">
+  <h2 id="name"></h2>
+  <p id="desc"></p>
+  <p id="extra"></p>
+  <div id="photos"></div>
+
+  <div id="buttons">
+    <button class="approve" onclick="approveSite()">Approve</button>
+    <button class="reject" onclick="rejectSite()">Reject</button>
+  </div>
+
+  <h3 id="endMsg" class="hidden">No more sites to review 🎉</h3>
+</div>
+
+<script>
+let currentSite = null;
+
+// 🧠 GET NEXT PENDING SITE
+async function loadNextSite() {
+  const { data } = await sb
+    .from("sites")
+    .select("*")
+    .eq("status", "pending")
+    .order("site_id", { ascending: true })
+    .limit(1);
+
+  if (!data || data.length === 0) {
+    document.getElementById("name").classList.add("hidden");
+    document.getElementById("desc").classList.add("hidden");
+    document.getElementById("extra").classList.add("hidden");
+    document.getElementById("buttons").classList.add("hidden");
+    document.getElementById("endMsg").classList.remove("hidden");
+    return;
+  }
+
+  currentSite = data[0];
+
+  const desc = JSON.parse(currentSite.description || "{}");
+
+  document.getElementById("name").innerText = currentSite.name;
+
+  document.getElementById("desc").innerText =
+    desc.descEng || "No description";
+
+  document.getElementById("extra").innerText =
+    `Lat: ${currentSite.latitude}, Lng: ${currentSite.longitude}
+     | Holes: ${desc.holeCount ?? "Unknown"}`;
+
+  const { data: photos } = await sb
+  .from("photos")
+  .select("*")
+  .eq("site_id", currentSite.site_id);
+
+const container = document.getElementById("photos");
+container.innerHTML = "";
+
+photos.forEach(p => {
+  const img = document.createElement("img");
+  img.src = p.image_url;
+  img.style.width = "100%";
+  img.style.marginTop = "10px";
+  container.appendChild(img);
+});
+
+}
+
+// ✅ APPROVE
+async function approveSite() {
+  await sb
+    .from("sites")
+    .update({ status: "approved" })
+    .eq("site_id", currentSite.site_id);
+
+  loadNextSite();
+}
+
+// ❌ REJECT
+async function rejectSite() {
+  await sb
+    .from("sites")
+    .update({ status: "rejected" })
+    .eq("site_id", currentSite.site_id);
+
+  loadNextSite();
+}
+
+async function checkAccess() {
+  // ⏳ wait for session to load properly
+  const {
+    data: { session }
+  } = await sb.auth.getSession();
+
+  if (!session) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const user = session.user;
+
+  // 🧠 now get role
+  const { data, error } = await sb
+    .from("users")
+    .select("role")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error || !data) {
+    console.error("Role fetch error:", error);
+    document.body.innerHTML = "<h1>Error loading user</h1>";
+    return;
+  }
+
+  if (data.role !== "admin") {
+    document.body.innerHTML = "<h1>Access denied</h1>";
+    return;
+  }
+
+  // ✅ ONLY NOW load admin content
+  loadNextSite();
+}
+
+checkAccess();
+</script>
+
+</body>
+</html>
