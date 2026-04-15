@@ -40,9 +40,9 @@ function getDescription(site) {
 function openSite(site) {
   const desc = getDescription(site);
 
-  document.getElementById('title').innerText = site.name;
+  document.getElementById('popupTitle').innerText = site.name;
 
-  document.getElementById('desc').innerText =
+  document.getElementById('popupDesc').innerText =
     (desc.descEng || "No description available") +
     (desc.holeCount !== undefined && desc.holeCount !== -1
       ? `\n\nHoles: ${desc.holeCount}`
