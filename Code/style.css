@@ -322,3 +322,11 @@ html, body {
 .hidden {
   display: none;
 }
+
+.leaflet-control-zoom{
+  display: none;
+}
+
+.leaflet-tile {
+  filter: invert(1) hue-rotate(180deg);
+}
