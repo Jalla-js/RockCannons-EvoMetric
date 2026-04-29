@@ -1,0 +1,116 @@
+put this part in html
+
+ <!-- English button -->
+<button onclick="switchToEnglish()">English</button>
+<!-- Welsh language button -->
+<button onclick="switchToWelsh()">Cymraeg</button>
+
+
+Define the button size, position and style in css
+
+
+put this part in js
+
+// 1. The initial default language of the page
+let nowLang = "en";
+
+// 2. Store English content and translated Welsh content
+let transCache = new Map();
+
+// 3. Bind function with English button
+async function switchToEnglish()
+{
+// Set current language to English
+nowLang = "en";
+// Call the core translation function to restore the original text
+await translateAllContent();
+}
+
+// 4. Bind function with Welsh language button
+async function switchToWelsh()
+{
+// Set current language to Welsh
+nowLang = "cy";
+// Scan text content, use external translation service to complete translation
+await translateAllContent();
+}
+
+// 5. Read page information, scan English text, translate to Welsh
+async function translateAllContent()
+{
+// Fill in the tags that need to be translated here
+let allTextDom = document.querySelectorAll("button,and，，，");
+
+// Read text content one by one
+for (let i = 0; i < allTextDom.length; i++)
+{
+let item = allTextDom[i];
+
+// Read the English text inside the tags
+let originalText = item.innerText.trim();
+// Read content inside the input box
+let originalPlaceholder = item.placeholder;
+
+// Skip directly if there is no content
+if (originalText === "" && originalPlaceholder === "")
+{
+continue;
+}
+
+// Switch back to English language
+if (nowLang === "en")
+{
+if (transCache.has(originalText))
+{
+item.innerText = transCache.get(originalText);
+}
+
+if (transCache.has(originalPlaceholder))
+{
+item.placeholder = transCache.get(originalPlaceholder);
+}
+}
+
+// Scan text, read content, start translation
+// Need internet connection, call external translation interface
+if (nowLang === "cy")
+{
+// Translate normal text content
+if (originalText !== "")
+{
+// Connect to the network to complete automatic translation
+let res = await fetch(
+"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=cy&dt=t&q="
++ encodeURIComponent(originalText)
+);
+
+let data = await res.json();
+let newTranslateText = data[0][0][0];
+
+// Show translated content, replace the original language text
+item.innerText = newTranslateText;
+
+// Save translated content to avoid repeated translation
+transCache.set(originalText + "_cy", newTranslateText);
+transCache.set(newTranslateText, originalText);
+}
+
+// Translate the hint text inside the input box
+// Input box content is different from normal text content
+if (originalPlaceholder !== "")
+{
+let res = await fetch(
+"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=cy&dt=t&q="
++ encodeURIComponent(originalPlaceholder)
+);
+
+let data = await res.json();
+let newPlaceText = data[0][0][0];
+
+item.placeholder = newPlaceText;
+transCache.set(originalPlaceholder + "_cy", newPlaceText);
+transCache.set(newPlaceText, originalPlaceholder);
+}
+}
+}
+}
