@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welsh Rock Cannons</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+    <!-- lang btns -->
+    <div class="top-lang-buttons">
+        <button class="btn lang-btn" data-lang="en">English</button>
+        <button class="btn lang-btn" data-lang="cy">Cymraeg</button>
+    </div>
+
+    <!-- home -->
+    <div id="a" class="home-page">
+        <h1>Welsh Rock Cannons</h1>
+        <p>North Wales Historical Sites Interactive Map</p>
+        <button id="a1" class="open-map-btn">Open Map</button>
+    </div>
+
+    <!-- map page -->
+    <div id="b" class="map-page">
+        <div class="top-sidebar-btn">
+            <button class="btn" id="toggleSidebar">Hide Panel</button>
+        </div>
+        <div class="map-container">
+            <div id="b2" class="sidebar">
+                <input type="text" id="b21" class="search-box" placeholder="Search rock cannon sites...">
+                <p id="b22" class="no-result">No results found</p>
+                
+                <h3>About Rock Cannons</h3>
+                <p>English: Rock cannon</p>
+                <p>Welsh: Carreg cannan / cerrig cannan</p>
+                <p>A traditional celebration device in North Wales, made by drilling holes in big rocks and filling with black powder.</p>
+                <p>235 sites were recorded in Gwynedd by 2001.</p>
+                <p>Used for weddings, royal visits and festivals in the 18th-19th centuries.</p>
+            </div>
+            <div id="b3" class="map-area"></div>
+        </div>
+    </div>
+
+    <!-- detail -->
+    <div id="detail-page" class="detail-page">
+        <div class="detail-header">
+            <button class="back-btn" id="backBtn">← Back to Map</button>
+        </div>
+        <h1 id="dTitle" class="detail-title"></h1>
+        <p id="dWelsh" class="detail-sub"></p>
+        <div class="detail-block">
+            <h3 id="locHead">Location</h3>
+            <p id="dLoc"></p>
+        </div>
+        <div class="detail-block">
+            <h3 id="typeHead">Site Type</h3>
+            <p id="dType"></p>
+        </div>
+        <div class="detail-block">
+            <h3 id="histHead">History</h3>
+            <p id="dHist"></p>
+        </div>
+        <div class="detail-block">
+            <h3 id="manuHead">Manufacture</h3>
+            <p id="dManu"></p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // global vars
+        var lang = "en";
+        var oldTexts = new Map(); // save old text
+        var transCache = new Map(); // save trans
+        var marks = [];
+        var nowSite = null;
+        var mapIsLoad = false;
+        var map = null;
+        var toggleBtn = null;
+        var sidebar = null;
+
+        // site data
+        var sites = [
+            {
+                name: "Pont-y-Pair Rock Cannon",
+                lat: 53.09419, lng: -3.80659, holeCount: 53,
+                type: "Public Heritage Site",
+                history: "Near Pont-y-Pair Bridge in Betws-y-coed (Conwy), the most famous rock cannon in North Wales. 53 holes cover 9.25m × 3.22m, a key spot on the waterfall trail with clearly visible drill holes and powder grooves. A classic 19th century community celebration device.",
+                manufacture: "Holes drilled into natural riverbank rock, connected by shallow grooves for continuous explosion sequence. Holes with diameter of several centimeters, designed for optimal sound propagation in the valley."
+            },
+            {
+                name: "Nannau Estate Rock Cannon",
+                lat: 52.75, lng: -3.9, holeCount: 21,
+                type: "Estate Heritage Site",
+                history: "Built in 1824 for the 21st birthday of Baron Robert Williames Vaughan III, on Foel Cynwch and Foel Offrwm hills near Dolgellau (Gwynedd). 21 shots fired at dawn, echoing with Cader Idris mountain. Holes well-preserved after over 200 years, a typical aristocratic celebration example.",
+                manufacture: "Vertical deep holes drilled into mountain rock, no connecting grooves, sequential detonation of individual holes. Gunpowder fixed with goose fat to ensure stable ignition sequence."
+            },
+            {
+                name: "Mynydd Llandegai Rock Cannon",
+                lat: 53.16504, lng: -4.07924, holeCount: 42,
+                type: "Quarry Community Site",
+                history: "Located in Gefnan slate quarry (Gwynedd), a representative of quarry workers' rock cannons. Built in 19th century with professional drilling tools, used for quarry milestones, royal visits and other major events, serving as an important symbol of collective celebration in worker communities.",
+                manufacture: "Regular and uniform deep holes drilled with mechanical assistance, gunpowder load adapted to quarry sound propagation. Holes arranged in a line for continuous explosion effect."
+            },
+            {
+                name: "Moel-y-Gest Rock Cannon",
+                lat: 52.9278, lng: -4.1588, holeCount: 37,
+                type: "Hillside Estate Site",
+                history: "On Morfa Bychan hillside near Porthmadog (Gwynedd), a private estate celebration device for VIP receptions and festivals. Coastal hillside location makes explosion sound echo across coast and valley, with spectacular audio-visual effects.",
+                manufacture: "Inclined holes drilled along the hillside trend, exposed rock surface for better sound diffusion. Shallow grooves connect partial holes for staged explosion sequence."
+            },
+            {
+                name: "Parc Bron y Graig Rock Cannon",
+                lat: 52.863, lng: -4.110, holeCount: 5,
+                type: "Small Community Site",
+                history: "Located in Harlech (Gwynedd), one of the few small rock cannons in North Wales with only 5 holes. Designed for small-scale community events like weddings and local festivals, reflecting the diverse usage scenarios of rock cannons.",
+                manufacture: "Small independent rock holes with no connecting grooves, individual detonation for easy operation. Suitable for small community celebrations with low gunpowder usage."
+            },
+            {
+                name: "Trefriw Rock Cannon",
+                lat: 53.18, lng: -3.82, holeCount: 13,
+                type: "Forest Heritage Site",
+                history: "Built in 1863 specifically to celebrate the wedding of the Prince of Wales, with 13 holes. The site is now hidden in the forest near Trefriw (Conwy), an important witness of rock cannons used for national celebrations, recording the grand scene of royal celebrations in 19th century Wales.",
+                manufacture: "Rock holes connected by shallow grooves to achieve 15-second continuous chain explosion. Gunpowder trajectory fixed with goose fat to ensure stable and sequential ignition."
+            },
+            {
+                name: "Parys Mountain Rock Cannon",
+                lat: 53.38, lng: -4.34, holeCount: 18,
+                type: "Ancient Copper Mine Site",
+                history: "The oldest recorded rock cannon in Wales (1797), located in Parys Mountain Copper Mine (Anglesey) with at least 3 remaining sites. As a scheduled ancient monument, it witnesses the origin of Welsh rock cannon culture.",
+                manufacture: "Hand-carved original deep holes without later modification, the most primitive construction form of early rock cannons, providing a reference for subsequent rock cannon production."
+            },
+            {
+                name: "Cwm Eigiau Rock Cannon",
+                lat: 53.12, lng: -3.98, holeCount: 29,
+                type: "Hiking Trail Site",
+                history: "Located near slate quarry along Eryri National Park hiking trail (Gwynedd), a popular spot for hikers to explore rock cannon sites. The site is well-preserved with beautiful surrounding natural scenery, allowing close observation of drill hole details.",
+                manufacture: "Multiple groups of independent holes arranged with clear powder grooves, combining practicality and aesthetics in construction, a typical representative of quarry area rock cannons."
+            }
+        ];
+
+        // get elements
+        var home = document.getElementById('a');
+        var mapPage = document.getElementById('b');
+        var detailPage = document.getElementById('detail-page');
+        var openMapBtn = document.getElementById('a1');
+        var backBtn = document.getElementById('backBtn');
+        var langBtns = document.querySelectorAll('.lang-btn');
+
+        // open map
+        openMapBtn.onclick = function() {
+            home.style.display = 'none';
+            mapPage.style.display = 'block';
+            detailPage.style.display = 'none';
+            
+            if (!mapIsLoad) {
+                initMap();
+                mapIsLoad = true;
+            }
+        }
+
+        // back to map
+        backBtn.onclick = function() {
+            detailPage.style.display = 'none';
+            mapPage.style.display = 'block';
+        }
+
+        // init map
+        function initMap() {
+            map = L.map('b3').setView([53.05, -3.95], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // add marks
+            for (var i = 0; i < sites.length; i++) {
+                var s = sites[i];
+                var mark = L.marker([s.lat, s.lng]).addTo(map);
+                mark.data = s;
+                marks.push(mark);
+                mark.bindPopup(getPopup(s, lang));
+            }
+
+            // search
+            var searchInput = document.getElementById('b21');
+            var noResult = document.getElementById('b22');
+            
+            searchInput.oninput = function(e) {
+                var kw = e.target.value.trim().toLowerCase();
+                var found = false;
+                for (var j = 0; j < marks.length; j++) {
+                    var m = marks[j];
+                    var d = m.data;
+                    var match = d.name.toLowerCase().includes(kw);
+                    
+                    if (kw == "") {
+                        m.setOpacity(1);
+                        noResult.style.display = 'none';
+                    } else if (match) {
+                        m.setOpacity(1);
+                        m.openPopup();
+                        map.setView([d.lat, d.lng], 14);
+                        found = true;
+                        noResult.style.display = 'none';
+                    } else {
+                        m.setOpacity(0);
+                    }
+                }
+                if (kw != "" && !found) {
+                    noResult.style.display = 'block';
+                }
+            }
+
+            // toggle sidebar
+            toggleBtn = document.getElementById('toggleSidebar');
+            sidebar = document.getElementById('b2');
+            
+            toggleBtn.onclick = function() {
+                sidebar.classList.toggle('hidden');
+                map.invalidateSize();
+            }
+        }
+
+        // make popup
+        function getPopup(site, l) {
+            var title = site.name;
+            var subtitle = "";
+            var siteType = site.type;
+
+            if (l == "cy" && transCache.has(site.name)) {
+                title = transCache.get(site.name);
+                subtitle = site.name;
+            }
+            if (l == "cy" && transCache.has(site.type)) {
+                siteType = transCache.get(site.type);
+            }
+
+            var latText = transCache.get("Latitude") || "Latitude";
+            var lngText = transCache.get("Longitude") || "Longitude";
+            var holeText = transCache.get("Number of Holes") || "Number of Holes";
+            var typeText = transCache.get("Site Type") || "Site Type";
+            var showMoreText = transCache.get("Show More") || "Show More";
+
+            return `<div class='map-popup'>
+                <h3>${title}</h3>
+                <p class='popup-sub'>${subtitle}</p>
+                <p><strong>${latText}:</strong> ${site.lat}</p>
+                <p><strong>${lngText}:</strong> ${site.lng}</p>
+                <p><strong>${holeText}:</strong> ${site.holeCount}</p>
+                <p><strong>${typeText}:</strong> ${siteType}</p>
+                <button class="show-more-btn" onclick="showDetail(${sites.indexOf(site)})">${showMoreText}</button>
+                </div>`;
+        }
+
+        // go to detail
+        function showDetail(index) {
+            nowSite = sites[index];
+            updateDetail(lang);
+            mapPage.style.display = 'none';
+            detailPage.style.display = 'block';
+        }
+
+        // update detail
+        function updateDetail(l) {
+            var title = nowSite.name;
+            var subtitle = "";
+            var type = nowSite.type;
+            var history = nowSite.history;
+            var manufacture = nowSite.manufacture;
+
+            if (l == "cy") {
+                if (transCache.has(nowSite.name)) title = transCache.get(nowSite.name);
+                if (transCache.has(nowSite.type)) type = transCache.get(nowSite.type);
+                if (transCache.has(nowSite.history)) history = transCache.get(nowSite.history);
+                if (transCache.has(nowSite.manufacture)) manufacture = transCache.get(nowSite.manufacture);
+                subtitle = nowSite.name;
+            }
+
+            document.getElementById('dTitle').textContent = title;
+            document.getElementById('dWelsh').textContent = subtitle;
+            document.getElementById('dType').textContent = type;
+            document.getElementById('dHist').textContent = history;
+            document.getElementById('dManu').textContent = manufacture;
+
+            var latText = transCache.get("Latitude") || "Latitude";
+            var lngText = transCache.get("Longitude") || "Longitude";
+            var holeText = transCache.get("Number of Holes") || "Number of Holes";
+            document.getElementById('dLoc').textContent = `${latText}: ${nowSite.lat}, ${lngText}: ${nowSite.lng}, ${holeText}: ${nowSite.holeCount}`;
+        }
+
+        // translate one
+        async function translateOne(text, targetLang) {
+            if (!text || text.trim() == "") return text;
+            if (targetLang == "en") return text;
+            if (transCache.has(text)) return transCache.get(text);
+
+            // skip numbers
+            if (/^[\d\s\.\,\:\×\-\(\)]+$/.test(text)) return text;
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+                var url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+                var res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                var data = await res.json();
+                
+                if (data && data[0] && data[0][0] && data[0][0][0]) {
+                    var t = data[0][0][0];
+                    transCache.set(text, t);
+                    return t;
+                }
+                return text;
+            } catch (error) {
+                return text;
+            }
+        }
+
+        // save old text
+        function saveOldText(node) {
+            if (node.nodeType == 3) {
+                var text = node.textContent.trim();
+                if (text && !oldTexts.has(node)) {
+                    oldTexts.set(node, text);
+                }
+            } else if (node.nodeType == 1 && node.tagName != "SCRIPT" && node.tagName != "STYLE") {
+                if (node.tagName == "INPUT" && node.placeholder) {
+                    if (!oldTexts.has(node)) {
+                        oldTexts.set(node, node.placeholder);
+                    }
+                }
+                for (var i = 0; i < node.childNodes.length; i++) {
+                    saveOldText(node.childNodes[i]);
+                }
+            }
+        }
+
+        // change lang
+        async function changeLang(targetLang) {
+            langBtns.forEach(btn => btn.disabled = false);
+            document.body.classList.remove('loading');
+
+            if (targetLang == lang) return;
+
+            langBtns.forEach(btn => btn.disabled = true);
+            document.body.classList.add('loading');
+
+            try {
+                if (targetLang == "en") {
+                    oldTexts.forEach(function(oldText, node) {
+                        if (node.nodeType == 3) {
+                            node.textContent = oldText;
+                        } else if (node.tagName == "INPUT") {
+                            node.placeholder = oldText;
+                        }
+                    });
+                } else {
+                    if (oldTexts.size == 0) {
+                        saveOldText(document.body);
+                    }
+
+                    const textsToTranslate = new Set();
+                    oldTexts.forEach(text => {
+                        if (!/^[\d\s\.\,\:\×\-\(\)]+$/.test(text)) {
+                            textsToTranslate.add(text);
+                        }
+                    });
+
+                    await Promise.all(
+                        Array.from(textsToTranslate).map(text => translateOne(text, targetLang))
+                    );
+
+                    oldTexts.forEach((oldText, node) => {
+                        if (transCache.has(oldText)) {
+                            if (node.nodeType == 3) {
+                                node.textContent = transCache.get(oldText);
+                            } else if (node.tagName == "INPUT") {
+                                node.placeholder = transCache.get(oldText);
+                            }
+                        }
+                    });
+                }
+
+                if (mapIsLoad) {
+                    marks.forEach(m => {
+                        m.setPopupContent(getPopup(m.data, targetLang));
+                    });
+                }
+
+                if (detailPage.style.display == 'block') {
+                    updateDetail(targetLang);
+                }
+
+                lang = targetLang;
+            } catch (error) {
+            } finally {
+                langBtns.forEach(btn => btn.disabled = false);
+                document.body.classList.remove('loading');
+            }
+        }
+
+        // lang btn click
+        langBtns.forEach(function(btn) {
+            btn.onclick = function() {
+                changeLang(this.dataset.lang);
+            }
+        });
+    </script>
+</body>
+</html>
