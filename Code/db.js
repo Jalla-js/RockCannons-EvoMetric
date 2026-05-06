@@ -10,7 +10,17 @@ window.sb =
 
 console.log("SB READY");
 
-// expose safely BEFORE anything else
+// --- UI HELPER ---
+// Automatically toggles the .btn-add visibility based on auth state
+const updateAddButtonVisibility = (user) => {
+  const addBtn = document.querySelector('.btn-add');
+  if (addBtn) {
+    addBtn.style.display = user ? "inline-flex" : "none";
+  }
+};
+
+// --- DB FUNCTIONS ---
+
 window.getVisibleSites = async function () {
   return await window.sb
     .from("sites")
@@ -23,21 +33,33 @@ window.addSite = async function (site) {
 };
 
 window.getCurrentUser = async function () {
-  const { data } = await sb.auth.getUser();
+  const { data } = await window.sb.auth.getUser();
   return data.user;
 };
 
 window.getUserRole = async function () {
-  const user = await getCurrentUser();
-
+  const user = await window.getCurrentUser();
   if (!user) return null;
 
-  const { data } = await sb
+  const { data } = await window.sb
     .from("users")
     .select("role")
     .eq("user_id", user.id)
+    .single();
 
   return data?.role;
 };
+
+// --- AUTH INITIALIZATION ---
+
+// 1. Run immediately on load
+window.getCurrentUser().then(user => {
+  updateAddButtonVisibility(user);
+});
+
+// 2. Listen for login/logout events
+window.sb.auth.onAuthStateChange((event, session) => {
+  updateAddButtonVisibility(session?.user || null);
+});
 
 console.log("DB READY");

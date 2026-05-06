@@ -20,6 +20,7 @@ body {
   color: var(--text);
 }
 
+
 #form {
   width: 75%;
   padding: 30px;
@@ -112,3 +113,21 @@ button[type="submit"]:active {
   transform: translateY(0);
 }
 
+.container {
+  position: relative;
+  padding-bottom: 60px; /* Make room so the button doesn't overlap text */
+}
+
+h1   button {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent), #16a34a);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
