@@ -14,104 +14,150 @@
 <h1>Add Rock Cannon</h1>
 
 <form id="form">
-
   <input id="name" placeholder="Site name" required />
 
   <input id="lat" placeholder="Latitude" required />
   <input id="lng" placeholder="Longitude" required />
 
-  <!-- 🧠 DESCRIPTION FIELD -->
-  <textarea id="descEng" placeholder="Description (English)" required></textarea>
+  <textarea id="descEng" placeholder="Description (English)"></textarea>
   <textarea id="descWel" placeholder="Description (Welsh)"></textarea>
 
-  <!-- 🕳️ HOLE COUNT FIELD -->
   <input id="holeCount" type="number" placeholder="Hole count (optional)" />
   <input type="file" id="imageUpload" multiple accept="image/*">
+
   <button type="submit">Add Site</button>
-
 </form>
+
 <script>
-    const role = await getUserRole();
+document.addEventListener("DOMContentLoaded", async () => {
 
-if (!role) {
-  alert("Please log in");
-  window.location.href = "login.html";
-}
+  async function waitForSession(retries = 5) {
+    for (let i = 0; i < retries; i++) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) return session;
+      await new Promise(r => setTimeout(r, 200));
+    }
+    return null;
+  }
 
-if (role !== "contributor" && role !== "admin") {
-  alert("You are not allowed to add sites");
-  window.location.href = "map.html";
-}
-    document.getElementById('form').addEventListener('submit', async (e) => {
-  e.preventDefault();
+  const session = await waitForSession();
 
-  const descEng = document.getElementById('descEng').value;
-  const descWel = document.getElementById('descWel').value;
-
-  let holeCount = document.getElementById('holeCount').value;
-  holeCount = holeCount === "" ? -1 : parseInt(holeCount);
-
-  // 1️⃣ CREATE SITE FIRST
-  const { data: siteData, error: siteError } = await sb
-    .from("sites")
-    .insert([{
-      name: document.getElementById('name').value,
-      latitude: parseFloat(document.getElementById('lat').value),
-      longitude: parseFloat(document.getElementById('lng').value),
-
-      description: JSON.stringify({
-        descEng,
-        descWel,
-        holeCount
-      }),
-
-      status: "pending"
-    }])
-    .select()
-    .single();
-
-  if (siteError) {
-    console.error(siteError);
-    alert("Site error: " + siteError.message);
+  if (!session) {
+    alert("Please log in");
+    window.location.href = "login.html";
     return;
   }
 
-  const siteId = siteData.site_id;
+  const role = await getUserRole();
 
-  // 2️⃣ UPLOAD IMAGES
-  const files = document.getElementById("imageUpload").files;
-
-  for (let file of files) {
-
-    const fileName = `${siteId}-${Date.now()}-${file.name}`;
-
-    const { error: uploadError } = await sb.storage
-      .from("site-images")
-      .upload(fileName, file);
-
-    if (uploadError) {
-      console.error(uploadError);
-      continue;
-    }
-
-    const { data } = sb.storage
-      .from("site-images")
-      .getPublicUrl(fileName);
-
-    // 3️⃣ SAVE TO PHOTOS TABLE
-    await sb.from("photos").insert([{
-      site_id: siteId,
-      image_url: data.publicUrl,
-      caption: null
-    }]);
+  if (!role) {
+    alert("Error loading user role");
+    return;
   }
 
-  alert("Submitted for approval!");
-  window.location.href = "map.html";
+  if (role !== "contributor" && role !== "admin") {
+    alert("You are not allowed to add sites");
+    window.location.href = "map.html";
+    return;
+  }
+
+  async function translateText(text, source, target) {
+    try {
+      const res = await fetch("https://libretranslate.de/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          q: text,
+          source: source,
+          target: target,
+          format: "text"
+        })
+      });
+
+      const data = await res.json();
+      return data.translatedText || "";
+    } catch (err) {
+      console.error("Translation failed:", err);
+      return "";
+    }
+  }
+
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    let descEng = document.getElementById('descEng').value.trim();
+    let descWel = document.getElementById('descWel').value.trim();
+
+    let holeCount = document.getElementById('holeCount').value;
+    holeCount = holeCount === "" ? -1 : parseInt(holeCount);
+
+    if (descEng && !descWel) {
+      descWel = await translateText(descEng, "en", "cy");
+    } else if (!descEng && descWel) {
+      descEng = await translateText(descWel, "cy", "en");
+    }
+
+    const { data: siteData, error: siteError } = await sb
+      .from("sites")
+      .insert([{
+        name: document.getElementById('name').value,
+        latitude: parseFloat(document.getElementById('lat').value),
+        longitude: parseFloat(document.getElementById('lng').value),
+        description: JSON.stringify({
+          descEng,
+          descWel,
+          holeCount
+        }),
+        status: "pending"
+      }])
+      .select()
+      .single();
+
+    if (siteError) {
+      console.error(siteError);
+      alert("Site error: " + siteError.message);
+      return;
+    }
+
+    const siteId = siteData.site_id;
+
+    const files = document.getElementById("imageUpload").files;
+
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const fileName = `${siteId}-${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await sb.storage
+        .from("site-images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error(uploadError);
+        return;
+      }
+
+      const { data } = sb.storage
+        .from("site-images")
+        .getPublicUrl(fileName);
+
+      return sb.from("photos").insert([{
+        site_id: siteId,
+        image_url: data.publicUrl,
+        caption: null
+      }]);
+    });
+
+    await Promise.all(uploadPromises);
+
+    alert("Submitted for approval!");
+    window.location.href = "map.html";
+  });
+
 });
-</script>
-<script>
+
 console.log("PAGE LOADED");
 </script>
+
 </body>
 </html>

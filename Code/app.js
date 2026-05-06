@@ -1,3 +1,13 @@
+let currentLang = localStorage.getItem("lang") || "en";
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  applyTranslations();
+  loadSites();
+}
+
+// 🌍 MAP SETUP
 const map = L.map('map').setView([53.1, -4.1], 10);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -6,7 +16,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let markers = L.layerGroup().addTo(map);
 
-// 🎨 marker colours based on status
+// 🎨 marker colours
 function getStyle(status) {
   if (status === "approved") {
     return {
@@ -27,8 +37,8 @@ function getStyle(status) {
   }
 }
 
-// 🧠 SAFE JSON PARSE (IMPORTANT FIX)
-function getDescription(site) {
+// 🧠 SAFE PARSE
+function parseDescription(site) {
   try {
     return site.description ? JSON.parse(site.description) : {};
   } catch {
@@ -36,22 +46,51 @@ function getDescription(site) {
   }
 }
 
-// 📍 open site panel
+// 🌐 LANGUAGE RESOLVER
+function resolveDescription(descObj) {
+  const isWelsh = currentLang === "cy";
+
+  const primary = isWelsh ? descObj.descWel : descObj.descEng;
+  const fallback = isWelsh ? descObj.descEng : descObj.descWel;
+
+  if (primary && primary.trim() !== "") {
+    return {
+      text: primary,
+      warning: ""
+    };
+  }
+
+  if (fallback && fallback.trim() !== "") {
+    return {
+      text: fallback,
+      warning: translations[currentLang].noWelsh + "\n\n"
+    };
+  }
+
+  return {
+    text: translations[currentLang].desc,
+    warning: ""
+  };
+}
+
+// 📍 OPEN SITE (FULL VIEW)
 function openSite(site) {
-  const desc = getDescription(site);
+  const descObj = parseDescription(site);
+  const resolved = resolveDescription(descObj);
 
   document.getElementById('popupTitle').innerText = site.name;
 
   document.getElementById('popupDesc').innerText =
-    (desc.descEng || "No description available") +
-    (desc.holeCount !== undefined && desc.holeCount !== -1
-      ? `\n\nHoles: ${desc.holeCount}`
+    resolved.warning +
+    resolved.text +
+    (descObj.holeCount !== undefined && descObj.holeCount !== -1
+      ? `\n\n${translations[currentLang].holes}${descObj.holeCount}`
       : "");
 
   map.flyTo([site.latitude, site.longitude], 15);
 }
 
-// 📦 load + filter + search
+// 📦 LOAD SITES
 async function loadSites() {
   markers.clearLayers();
 
@@ -67,13 +106,13 @@ async function loadSites() {
 
     if (site.status === "rejected") return;
 
-    const desc = getDescription(site);
+    const descObj = parseDescription(site);
 
-    const descEng = (desc.descEng || "").toLowerCase();
-    const descWel = (desc.descWel || "").toLowerCase();
-    const holeCount = desc.holeCount ?? -1;
+    const descEng = (descObj.descEng || "").toLowerCase();
+    const descWel = (descObj.descWel || "").toLowerCase();
+    const holeCount = descObj.holeCount ?? -1;
 
-    // 🔍 SEARCH (name + both descriptions)
+    // 🔍 SEARCH
     if (
       search &&
       !site.name.toLowerCase().includes(search) &&
@@ -83,14 +122,11 @@ async function loadSites() {
       return;
     }
 
-    // 🕳️ HOLE FILTER (FIXED LOGIC)
+    // 🕳️ FILTER
     if (holeFilter) {
-
       if (holeFilter === "4") {
-        // 4+ holes
         if (holeCount === -1 || holeCount < 4) return;
       } else {
-        // exact match
         if (holeCount !== parseInt(holeFilter)) return;
       }
     }
@@ -106,31 +142,35 @@ async function loadSites() {
 
 let selectedSite = null;
 
+// 📍 POPUP
 function openPopup(site) {
   selectedSite = site;
 
-  const desc = getDescription(site);
+  const descObj = parseDescription(site);
+  const resolved = resolveDescription(descObj);
 
   document.getElementById("popupTitle").innerText = site.name;
+
   document.getElementById("popupDesc").innerText =
-    desc.descEng || "No description";
+    resolved.warning + resolved.text;
 
   document.getElementById("popupHole").innerText =
-    "Holes: " + (desc.holeCount ?? "Unknown");
+    translations[currentLang].holes +
+    (descObj.holeCount ?? "Unknown");
 
   document.getElementById("sitePopup").classList.remove("hidden");
-  document.getElementById("openFullBtn").addEventListener("click", () => {
-  if (!selectedSite) return;
 
-  window.location.href = `site.html?id=${selectedSite.site_id}`;
-});
+  document.getElementById("openFullBtn").onclick = () => {
+    if (!selectedSite) return;
+    window.location.href = `site.html?id=${selectedSite.site_id}`;
+  };
 }
 
 function closePopup() {
   document.getElementById("sitePopup").classList.add("hidden");
 }
 
-// 🔁 live updates
+// 🔁 LIVE SEARCH / FILTER
 const searchInput = document.getElementById("searchInput");
 const filterHoles = document.getElementById("filterHoles");
 
@@ -142,9 +182,10 @@ if (filterHoles) {
   filterHoles.addEventListener("change", loadSites);
 }
 
-// 🚀 initial load
+// 🚀 INITIAL LOAD
 loadSites();
 
+// 👤 USER
 let currentUser = null;
 
 async function loadUser() {
@@ -154,11 +195,7 @@ async function loadUser() {
 
   if (!user) {
     btn.innerText = "👤";
-
-    btn.onclick = () => {
-      window.location.href = "login.html";
-    };
-
+    btn.onclick = () => window.location.href = "login.html";
     return;
   }
 
@@ -202,4 +239,46 @@ function toggleUserMenu() {
     location.reload();
   };
 }
+
 loadUser();
+
+// 🌐 LANGUAGE TOGGLE
+document.getElementById("langToggle").onclick = () => {
+  setLang(currentLang === "en" ? "cy" : "en");
+}
+
+function updateLangButton() {
+  const btn = document.getElementById("langToggle");
+  if (btn) btn.innerText = currentLang === "en" ? "CY" : "EN";
+}
+
+// 🌍 TRANSLATIONS
+const translations = {
+  en: {
+    search: "Search Sites...",
+    filter: "Filter by hole count",
+    holes: "Holes: ",
+    desc: "No description",
+    noWelsh: "⚠️ No Welsh translation available"
+  },
+  cy: {
+    search: "Chwilio safleoedd...",
+    filter: "Hidlo yn ôl nifer tyllau",
+    holes: "Tyllau: ",
+    desc: "Dim disgrifiad",
+    noWelsh: "⚠️ Dim cyfieithiad Cymraeg ar gael"
+  }
+}
+
+// 🔤 APPLY UI TRANSLATIONS
+function applyTranslations() {
+  updateLangButton();
+
+  const t = translations[currentLang];
+
+  const search = document.getElementById("searchInput");
+  if (search) search.placeholder = t.search;
+  
+  const filter = document.getElementById("filterHoles");
+  if (filter) filter.options[0].text = t.filter;
+}
