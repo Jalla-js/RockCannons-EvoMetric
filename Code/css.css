@@ -23,13 +23,13 @@
 /* A1 - Open map button */
 #a1 {
     padding: 10px 30px;
-    background: #007bff;
+    background: #00ff95;
     color: #fff;
     border: none;
     cursor: pointer;
 }
 #a1:hover {
-    background: #0056b3;
+    background: #175da7;
 }
 
 /* B - map page */

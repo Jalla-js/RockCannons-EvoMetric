@@ -31,22 +31,34 @@
     <option value="3">6-10 holes</option>
     <option value="4">11+ holes</option>
   </select>
+  <button class="btn-add" onclick="window.location.href='add.html'">Add Site</button>  
+  <div id="visitedCount">
+    <span id="visitedNumber"></span> visited
+  </div>
   <div id="userBtn" class="user-circle"></div>
-  <button id="langToggle">EN</button>
+
+  
 </div>
 
 <div id="sitePopup" class="popup hidden">
   <h3 id="popupTitle"></h3>
   <p id="popupDesc"></p>
   <p id="popupHole"></p>
+  <div class="popup-image-wrapper">
+    <button id="prevPhotoBtn" class="popup-image-nav">&lt;</button>
+    <img id="popuppicture" src="" alt="no picture available">
+    <button id="nextPhotoBtn" class="popup-image-nav">&gt;</button>
+  </div>
+
   <div class="popup-actions">
     <button id="openFullBtn">Open full page</button>
     <button onclick="closePopup()">Close</button>
   </div>
 </div>
 
-  <script>
-console.log("PAGE LOADED");
+<script>
+
+  console.log("PAGE LOADED");
 </script>
 </body>
 </html>

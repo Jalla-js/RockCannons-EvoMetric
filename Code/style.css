@@ -1,14 +1,14 @@
 :root {
-  --bg: #0b1020;
-  --panel: rgba(18, 23, 38, 0.72);
+  --bg: #02ac65;
+  --panel: rgba(69, 107, 223, 0.72);
   --panel-strong: rgba(18, 23, 38, 0.9);
   --text: #f5f7fb;
   --muted: rgba(245, 247, 251, 0.72);
   --border: rgba(255, 255, 255, 0.12);
-  --accent: #7c5cff;
+  --accent: #151222;
   --accent-2: #22c55e;
   --danger: #ef4444;
-  --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  --shadow: 0 20px 50px rgba(14, 211, 103, 0.35);
   --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.22);
   --radius-lg: 22px;
   --radius-md: 16px;
@@ -52,15 +52,14 @@ html, body {
   width: min(92vw, 760px);
   padding: 12px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(20, 25, 40, 0.82), rgba(20, 25, 40, 0.62));
+  background: linear-gradient(180deg, rgba(7, 163, 20, 0.92), rgba(20, 25, 40, 0.62));
   backdrop-filter: blur(18px) saturate(1.3);
   -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
 
 #searchInput,
-#filterHoles, #langToggle {
+#filterHoles {
   height: 48px;
   border: 1px solid rgba(255, 255, 255, 0.10);
   outline: none;
@@ -70,6 +69,7 @@ html, body {
   font-size: 15px;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
+
 
 #searchInput {
   flex: 1;
@@ -94,13 +94,13 @@ html, body {
 
 #searchInput:focus,
 #filterHoles:focus {
-  border-color: rgba(124, 92, 255, 0.8);
+  border-color: rgba(15, 6, 54, 0.8);
   box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.18);
-  background: rgba(255, 255, 255, 0.10);
+  background-color: rgba(72, 77, 72, 0.92);
 }
 
 #userBtn {
-  margin-left: 2px;
+  margin-left: 2px;;
 }
 
 /* USER BUTTON */
@@ -108,15 +108,15 @@ html, body {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #4f46e5);
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(34, 197, 94, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   cursor: pointer;
   user-select: none;
-  box-shadow: 0 12px 25px rgba(124, 92, 255, 0.35);
+  box-shadow: 0 12px 25px rgba(34, 197, 94, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.18);
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
@@ -124,7 +124,7 @@ html, body {
 .user-circle:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
-  box-shadow: 0 16px 30px rgba(124, 92, 255, 0.45);
+  box-shadow: 0 16px 30px rgba(5, 1, 20, 0.45);
 }
 
 .user-circle:active {
@@ -136,12 +136,12 @@ html, body {
   position: absolute;
   z-index: 2000;
   width: min(92vw, 440px);
-  padding: 18px;
+  padding: 19px;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(20, 25, 40, 0.92), rgba(20, 25, 40, 0.78));
+  background: linear-gradient(180deg, rgba(7, 163, 20, 0.92), rgba(20, 25, 40, 0.78));
   backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  border: 1px solid var(--border);
+
   box-shadow: var(--shadow);
   color: var(--text);
   overflow: hidden;
@@ -159,6 +159,15 @@ html, body {
   line-height: 1.45;
 }
 
+.popup img caro {
+  width: 100%;
+  border: #00e932 solid 5px;
+  height: auto;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  object-fit: cover;
+}
+
 .popup button {
   appearance: none;
   border: none;
@@ -170,7 +179,7 @@ html, body {
 }
 
 #openFullBtn {
-  background: linear-gradient(135deg, var(--accent), #4f46e5);
+  background: linear-gradient(135deg, var(--accent), #249601);
   color: white;
   margin-right: 10px;
 }
@@ -181,7 +190,7 @@ html, body {
 }
 
 .popup button[onclick] {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(253, 188, 188, 0.08);
   color: var(--text);
   border: 1px solid rgba(255, 255, 255, 0.10);
 }
@@ -190,16 +199,63 @@ html, body {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.popup-image-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 16px 0;
+}
+
+#popuppicture {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: none;
+}
+
+.popup-image-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(29, 230, 62, 0.18);
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.65;
+}
+
+.popup-image-nav:hover {
+  opacity: 1;
+}
+
+#prevPhotoBtn {
+  left: 8px;
+}
+
+#nextPhotoBtn {
+  right: 8px;
+}
+
+.popup-image-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* DESKTOP SIDEBAR */
 @media (min-width: 701px) {
   .popup {
-    top: 24px;
+    top: 150px;
     left: 24px;
     bottom: 24px;
     right: auto;
     transform: none;
     width: 390px;
-    height: calc(100vh - 48px);
+    height: fit-content;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -211,6 +267,40 @@ html, body {
 
   .popup p {
     font-size: 15px;
+  }
+
+  .popup img {
+    height: 180px;
+    margin-bottom: 14px;
+    padding: auto;
+    border: 5px solid #25e47b;
+  }
+
+ .btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  background: linear-gradient(#17793baf);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+  text-decoration: none; /* In case you use an <a> tag */
+  }
+
+.btn-add:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+  }
+
+.btn-add:active {
+  transform: translateY(0);
   }
 }
 
@@ -245,8 +335,7 @@ html, body {
     transform: translateX(-50%);
     bottom: 12px;
     width: 94vw;
-    border-radius: 18px 18px 16px 16px;
-    max-height: 42vh;
+    border-radius: 18px 18px 16px 16px;;
   }
 }
 
@@ -258,7 +347,7 @@ html, body {
   width: min(180px, 40vw);
   padding: 12px;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(20, 25, 40, 0.96), rgba(20, 25, 40, 0.86));
+  background: linear-gradient(180deg, rgba(20, 25, 40, 0.96), rgba(0, 0, 2, 0.86));
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   z-index: 9999;
@@ -329,14 +418,4 @@ html, body {
 
 .leaflet-tile {
   filter: invert(1) hue-rotate(180deg);
-}
-
-option {
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  outline: none;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  font-size: 15px;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }

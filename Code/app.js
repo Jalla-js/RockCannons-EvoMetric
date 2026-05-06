@@ -1,13 +1,3 @@
-let currentLang = localStorage.getItem("lang") || "en";
-
-function setLang(lang) {
-  currentLang = lang;
-  localStorage.setItem("lang", lang);
-  applyTranslations();
-  loadSites();
-}
-
-// 🌍 MAP SETUP
 const map = L.map('map').setView([53.1, -4.1], 10);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -16,7 +6,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let markers = L.layerGroup().addTo(map);
 
-// 🎨 marker colours
+// 🎨 marker colours based on status
 function getStyle(status) {
   if (status === "approved") {
     return {
@@ -37,8 +27,8 @@ function getStyle(status) {
   }
 }
 
-// 🧠 SAFE PARSE
-function parseDescription(site) {
+// 🧠 SAFE JSON PARSE (IMPORTANT FIX)
+function getDescription(site) {
   try {
     return site.description ? JSON.parse(site.description) : {};
   } catch {
@@ -46,51 +36,22 @@ function parseDescription(site) {
   }
 }
 
-// 🌐 LANGUAGE RESOLVER
-function resolveDescription(descObj) {
-  const isWelsh = currentLang === "cy";
-
-  const primary = isWelsh ? descObj.descWel : descObj.descEng;
-  const fallback = isWelsh ? descObj.descEng : descObj.descWel;
-
-  if (primary && primary.trim() !== "") {
-    return {
-      text: primary,
-      warning: ""
-    };
-  }
-
-  if (fallback && fallback.trim() !== "") {
-    return {
-      text: fallback,
-      warning: translations[currentLang].noWelsh + "\n\n"
-    };
-  }
-
-  return {
-    text: translations[currentLang].desc,
-    warning: ""
-  };
-}
-
-// 📍 OPEN SITE (FULL VIEW)
+// 📍 open site panel
 function openSite(site) {
-  const descObj = parseDescription(site);
-  const resolved = resolveDescription(descObj);
+  const desc = getDescription(site);
 
   document.getElementById('popupTitle').innerText = site.name;
 
   document.getElementById('popupDesc').innerText =
-    resolved.warning +
-    resolved.text +
-    (descObj.holeCount !== undefined && descObj.holeCount !== -1
-      ? `\n\n${translations[currentLang].holes}${descObj.holeCount}`
+    (desc.descEng || "No description available") +
+    (desc.holeCount !== undefined && desc.holeCount !== -1
+      ? `\n\nHoles: ${desc.holeCount}`
       : "");
 
   map.flyTo([site.latitude, site.longitude], 15);
 }
 
-// 📦 LOAD SITES
+// 📦 load + filter + search
 async function loadSites() {
   markers.clearLayers();
 
@@ -106,13 +67,13 @@ async function loadSites() {
 
     if (site.status === "rejected") return;
 
-    const descObj = parseDescription(site);
+    const desc = getDescription(site);
 
-    const descEng = (descObj.descEng || "").toLowerCase();
-    const descWel = (descObj.descWel || "").toLowerCase();
-    const holeCount = descObj.holeCount ?? -1;
+    const descEng = (desc.descEng || "").toLowerCase();
+    const descWel = (desc.descWel || "").toLowerCase();
+    const holeCount = desc.holeCount ?? -1;
 
-    // 🔍 SEARCH
+    // 🔍 SEARCH (name + both descriptions)
     if (
       search &&
       !site.name.toLowerCase().includes(search) &&
@@ -122,11 +83,14 @@ async function loadSites() {
       return;
     }
 
-    // 🕳️ FILTER
+    // 🕳️ HOLE FILTER (FIXED LOGIC)
     if (holeFilter) {
+
       if (holeFilter === "4") {
+        // 4+ holes
         if (holeCount === -1 || holeCount < 4) return;
       } else {
+        // exact match
         if (holeCount !== parseInt(holeFilter)) return;
       }
     }
@@ -141,36 +105,83 @@ async function loadSites() {
 }
 
 let selectedSite = null;
+let popupPhotos = [];
+let popupPhotoIndex = 0;
 
-// 📍 POPUP
+function showPopupPhoto() {
+  const img = document.getElementById('popuppicture');
+  const prevBtn = document.getElementById('prevPhotoBtn');
+  const nextBtn = document.getElementById('nextPhotoBtn');
+
+  if (!popupPhotos || popupPhotos.length === 0) {
+    img.src = '';
+    img.style.display = 'none';
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    return;
+  }
+
+  img.src = popupPhotos[popupPhotoIndex].image_url;
+  img.style.display = 'block';
+  prevBtn.style.display = 'inline-flex';
+  nextBtn.style.display = 'inline-flex';
+  prevBtn.disabled = popupPhotoIndex === 0;
+  nextBtn.disabled = popupPhotoIndex === popupPhotos.length - 1;
+}
+
 function openPopup(site) {
   selectedSite = site;
 
-  const descObj = parseDescription(site);
-  const resolved = resolveDescription(descObj);
+  const desc = getDescription(site);
 
   document.getElementById("popupTitle").innerText = site.name;
-
   document.getElementById("popupDesc").innerText =
-    resolved.warning + resolved.text;
+    desc.descEng || "No description";
 
   document.getElementById("popupHole").innerText =
-    translations[currentLang].holes +
-    (descObj.holeCount ?? "Unknown");
+    "Holes: " + (desc.holeCount ?? "Unknown");
+
+  (async () => {
+    const { data: photos } = await window.sb
+      .from("photos")
+      .select("image_url")
+      .eq("site_id", site.site_id);
+
+    popupPhotos = photos || [];
+    popupPhotoIndex = 0;
+    showPopupPhoto();
+  })();
+
+  const prevBtn = document.getElementById('prevPhotoBtn');
+  const nextBtn = document.getElementById('nextPhotoBtn');
+
+  prevBtn.onclick = () => {
+    if (popupPhotoIndex > 0) {
+      popupPhotoIndex -= 1;
+      showPopupPhoto();
+    }
+  };
+
+  nextBtn.onclick = () => {
+    if (popupPhotoIndex < popupPhotos.length - 1) {
+      popupPhotoIndex += 1;
+      showPopupPhoto();
+    }
+  };
 
   document.getElementById("sitePopup").classList.remove("hidden");
-
-  document.getElementById("openFullBtn").onclick = () => {
+  document.getElementById("openFullBtn").addEventListener("click", () => {
     if (!selectedSite) return;
+
     window.location.href = `site.html?id=${selectedSite.site_id}`;
-  };
+  });
 }
 
 function closePopup() {
   document.getElementById("sitePopup").classList.add("hidden");
 }
 
-// 🔁 LIVE SEARCH / FILTER
+// 🔁 live updates
 const searchInput = document.getElementById("searchInput");
 const filterHoles = document.getElementById("filterHoles");
 
@@ -182,10 +193,9 @@ if (filterHoles) {
   filterHoles.addEventListener("change", loadSites);
 }
 
-// 🚀 INITIAL LOAD
+// 🚀 initial load
 loadSites();
 
-// 👤 USER
 let currentUser = null;
 
 async function loadUser() {
@@ -195,7 +205,11 @@ async function loadUser() {
 
   if (!user) {
     btn.innerText = "👤";
-    btn.onclick = () => window.location.href = "login.html";
+
+    btn.onclick = () => {
+      window.location.href = "login.html";
+    };
+
     return;
   }
 
@@ -239,46 +253,4 @@ function toggleUserMenu() {
     location.reload();
   };
 }
-
 loadUser();
-
-// 🌐 LANGUAGE TOGGLE
-document.getElementById("langToggle").onclick = () => {
-  setLang(currentLang === "en" ? "cy" : "en");
-}
-
-function updateLangButton() {
-  const btn = document.getElementById("langToggle");
-  if (btn) btn.innerText = currentLang === "en" ? "CY" : "EN";
-}
-
-// 🌍 TRANSLATIONS
-const translations = {
-  en: {
-    search: "Search Sites...",
-    filter: "Filter by hole count",
-    holes: "Holes: ",
-    desc: "No description",
-    noWelsh: "⚠️ No Welsh translation available"
-  },
-  cy: {
-    search: "Chwilio safleoedd...",
-    filter: "Hidlo yn ôl nifer tyllau",
-    holes: "Tyllau: ",
-    desc: "Dim disgrifiad",
-    noWelsh: "⚠️ Dim cyfieithiad Cymraeg ar gael"
-  }
-}
-
-// 🔤 APPLY UI TRANSLATIONS
-function applyTranslations() {
-  updateLangButton();
-
-  const t = translations[currentLang];
-
-  const search = document.getElementById("searchInput");
-  if (search) search.placeholder = t.search;
-  
-  const filter = document.getElementById("filterHoles");
-  if (filter) filter.options[0].text = t.filter;
-}
