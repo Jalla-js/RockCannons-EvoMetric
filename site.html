@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Site Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="db.js"></script>
+
+  <style>
+    body { font-family: system-ui; margin: 0; padding: 20px;
+           background: #cfcfcf;  }
+    .back { margin-bottom: 20px; display: inline-block; }
+
+    .card {
+      background: rgba(7, 163, 20, 0.92);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<body>
+
+<a class="back" href="map.html">← Back to map</a>
+
+<div class="card">
+  <h1 id="name"></h1>
+  <p id="desc"></p>
+  <p id="extra"></p>
+  <div id="photos"></div>
+
+  <button id="visitBtn">Log as visited</button>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+console.log("Site ID from URL:", id);
+
+async function loadSite() {
+  if (!id) {
+    document.body.innerHTML = "<h2>No site ID provided</h2>";
+    return;
+  }
+
+  const { data, error } = await window.sb
+    .from("sites")
+    .select("*")
+    .eq("site_id", parseInt(id))
+    .single();
+
+  console.log("Supabase response:", data, error);
+
+  if (error || !data) {
+    document.body.innerHTML = "<h2>Site not found</h2>";
+    return;
+  }
+
+  let desc = {};
+
+  try {
+    desc = JSON.parse(data.description || "{}");
+  } catch {
+    desc = {};
+  }
+
+  document.getElementById("name").innerText = data.name || "No name";
+  document.getElementById("desc").innerText = desc.descEng || "No description";
+  document.getElementById("extra").innerText =
+    "Holes: " + (desc.holeCount ?? "Unknown");
+  
+  loadPhotos(data.site_id);
+}
+async function loadPhotos(siteId) {
+  const { data } = await window.sb
+    .from("photos")
+    .select("*")
+    .eq("site_id", siteId);
+
+  const container = document.getElementById("photos");
+  container.innerHTML = "";
+
+  data.forEach(photo => {
+    const img = document.createElement("img");
+    img.src = photo.image_url;
+    img.style.width = "100%";
+    img.style.marginTop = "10px";
+    img.style.borderRadius = "10px";
+
+    container.appendChild(img);
+  });
+}
+
+loadSite();
+</script>
+
+</body>
+</html>
