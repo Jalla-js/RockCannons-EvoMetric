@@ -10,8 +10,8 @@ window.sb =
 
 console.log("SB READY");
 
-// --- UI HELPER ---
-// Automatically toggles the .btn-add visibility based on auth state
+
+//hides add button if not logged in
 const updateAddButtonVisibility = (user) => {
   const addBtn = document.querySelector('.btn-add');
   if (addBtn) {
@@ -19,7 +19,7 @@ const updateAddButtonVisibility = (user) => {
   }
 };
 
-// --- DB FUNCTIONS ---
+//database functions
 
 window.getVisibleSites = async function () {
   return await window.sb
@@ -50,14 +50,10 @@ window.getUserRole = async function () {
   return data?.role;
 };
 
-// --- AUTH INITIALIZATION ---
-
-// 1. Run immediately on load
 window.getCurrentUser().then(user => {
   updateAddButtonVisibility(user);
 });
 
-// 2. Listen for login/logout events
 window.sb.auth.onAuthStateChange((event, session) => {
   updateAddButtonVisibility(session?.user || null);
 });

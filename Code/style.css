@@ -235,10 +235,16 @@ html, body {
 
 #prevPhotoBtn {
   left: 8px;
+  opacity: 2;
+  color: rgb(15, 196, 8);
+  background-color: #031d0894;
 }
 
 #nextPhotoBtn {
   right: 8px;
+  opacity: 2;
+  color: rgb(15, 196, 8);
+  background-color: #031d0894;
 }
 
 .popup-image-nav:disabled {
@@ -359,9 +365,9 @@ html, body {
 /* DROPDOWN */
 .user-dropdown {
   position: absolute;
-  top: 72px;
+  top: 100px;
   right: 16px;
-  width: min(180px, 40vw);
+  width: fit-content;
   padding: 12px;
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(20, 25, 40, 0.96), rgba(0, 0, 2, 0.86));
