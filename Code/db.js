@@ -19,6 +19,8 @@ const updateAddButtonVisibility = (user) => {
   }
 };
 
+//i need add admin button only for admin
+
 //database functions
 
 window.getVisibleSites = async function () {

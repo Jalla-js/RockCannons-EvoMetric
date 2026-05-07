@@ -125,7 +125,7 @@ h1   button {
   padding: 12px 24px;
   background: linear-gradient(135deg, var(--accent), #16a34a);
   color: white;
-  border: none;
+  border: 1px solid #000;
   border-radius: 12px;
   font-weight: 700;
   cursor: pointer;
