@@ -2,98 +2,580 @@
 <html>
 <head>
   <title>Site Details</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="db.js"></script>
 
+  <link rel="stylesheet" href="style.css">
+
   <style>
-    body { font-family: system-ui; margin: 0; padding: 20px;
-           background: #c9b8b8;  }
-    .back { margin-bottom: 20px; display: inline-block; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #272c2e;
+      color: white;
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .back {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .lang-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.08);
+      color: white;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
 
     .card {
-      background: rgba(110, 175, 115, 0.829);
-      padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      max-width: 850px;
+      margin: auto;
+background: rgba(255,255,255,0.06);
+border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px);
+
+      border: 1px solid rgba(255,255,255,0.08);
+
+      border-radius: 24px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 10px 40px rgba(0,0,0,0.4);
     }
+
+    .hero {
+      height: 280px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(
+  to top,
+  rgba(0,0,0,0.65),
+  rgba(0,0,0,0.15)
+)
+    }
+
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+
+      background:
+        linear-gradient(
+          to top,
+          rgba(11,15,23,0.95),
+          rgba(11,15,23,0.1)
+        );
+    }
+
+    .content {
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      margin-bottom: 18px;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      padding: 10px 14px;
+
+      border-radius: 999px;
+background: rgba(255,255,255,0.08);
+border: 1px solid rgba(255,255,255,0.08);
+color: rgba(255,255,255,0.85);
+
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .meta-label {
+      opacity: 0.8;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      margin-bottom: 22px;
+    }
+
+    .quick-btn {
+      flex: 1;
+      min-width: 110px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 12px;
+
+      border-radius: 14px;
+
+      background: rgba(59,130,246,0.15);
+
+      border: 1px solid rgba(59,130,246,0.25);
+
+      color: #93c5fd;
+
+      text-decoration: none;
+
+      font-weight: 600;
+      font-size: 14px;
+
+      cursor: pointer;
+
+      transition: 0.2s;
+    }
+
+    .quick-btn:hover {
+      transform: translateY(-2px);
+
+      background: rgba(59,130,246,0.22);
+    }
+
+    #desc {
+      line-height: 1.7;
+      font-size: 16px;
+      opacity: 0.92;
+    }
+
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 14px;
+      font-size: 20px;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns:
+        repeat(auto-fill, minmax(140px, 1fr));
+
+      gap: 10px;
+    }
+
+    .gallery img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+
+      object-fit: cover;
+
+      border-radius: 16px;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
+    }
+
+    .gallery img:hover {
+      transform: scale(1.03);
+      opacity: 0.9;
+    }
+
+    #visitBtn {
+      margin-top: 24px;
+
+      width: 100%;
+
+      border: none;
+      border-radius: 16px;
+
+      padding: 16px;
+
+      font-size: 16px;
+      font-weight: 700;
+
+      background:
+        linear-gradient(135deg, #26bd66, #117d3e);
+
+      color: white;
+
+      cursor: pointer;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+
+      background: rgba(0,0,0,0.92);
+
+      display: none;
+
+      justify-content: center;
+      align-items: center;
+
+      z-index: 9999;
+    }
+
+    .lightbox img {
+      max-width: 95%;
+      max-height: 90%;
+      border-radius: 18px;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    @media (max-width: 700px) {
+
+      body {
+        padding: 12px;
+      }
+
+      .hero {
+        height: 220px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .gallery {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+      .quick-actions {
+        flex-direction: column;
+      }
+    }
+
   </style>
 </head>
 
 <body>
 
-<a class="back" href="map.html">← Back to map</a>
+<div class="topbar">
+
+  <a class="back" id="backBtn" href="map.html">
+    ← Back to map
+  </a>
+
+  <button id="langToggle" class="lang-btn">
+    CY
+  </button>
+
+</div>
 
 <div class="card">
-  <h1 id="name"></h1>
-  <p id="desc"></p>
-  <p id="extra"></p>
-  <div id="photos"></div>
 
-  <button id="visitBtn">Log as visited</button>
+  <div class="hero">
+    <img id="heroImage" src="">
+    <div class="hero-overlay"></div>
+  </div>
+
+  <div class="content">
+
+    <h1 id="name"></h1>
+
+    <div class="meta-row">
+
+      <div class="meta-pill">
+        <span class="meta-label">🕳</span>
+        <span id="holesText"></span>
+      </div>
+
+      <div class="meta-pill">
+        <span class="meta-label">📍</span>
+        <span id="latlngText"></span>
+      </div>
+
+    </div>
+
+    <div class="quick-actions">
+
+      <a id="googleMapsBtn" target="_blank" class="quick-btn">
+        Google Maps
+      </a>
+
+      <a id="allTrailsBtn" target="_blank" class="quick-btn">
+        AllTrails
+      </a>
+
+      <button id="shareBtn" class="quick-btn">
+        Share
+      </button>
+
+    </div>
+
+    <p id="desc"></p>
+
+    <h2 id="imagesTitle"></h2>
+
+    <div id="photos" class="gallery"></div>
+
+    <button id="visitBtn"></button>
+
+  </div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <img id="lightboxImg">
 </div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
 
-console.log("Site ID from URL:", id);
+const translations = {
 
-async function loadSite() {
-  if (!id) {
-    document.body.innerHTML = "<h2>No site ID provided</h2>";
-    return;
+  en: {
+    holes: "holes",
+    images: "Images",
+    visit: "Mark as visited",
+    back: "← Back to map",
+    share: "Share",
+    noDesc: "No description available"
+  },
+
+  cy: {
+    holes: "tyllau",
+    images: "Lluniau",
+    visit: "Marcio fel wedi ymweld",
+    back: "← Yn ôl i'r map",
+    share: "Rhannu",
+    noDesc: "Dim disgrifiad ar gael"
+  }
+};
+
+let currentLang =
+  localStorage.getItem("lang") ||
+  navigator.language.slice(0,2) ||
+  "en";
+
+if (!["en","cy"].includes(currentLang)) {
+  currentLang = "en";
+}
+
+function toggleLang() {
+
+  currentLang =
+    currentLang === "en" ? "cy" : "en";
+
+  localStorage.setItem("lang", currentLang);
+
+  loadSite();
+}
+
+document.getElementById("langToggle")
+  .onclick = toggleLang;
+
+function getDescription(site) {
+
+  try {
+    return JSON.parse(site.description || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function getLocalizedDescription(site) {
+
+  const desc = getDescription(site);
+
+  if (currentLang === "cy") {
+
+    return desc.descWel ||
+           desc.descEng ||
+           translations.cy.noDesc;
   }
 
-  const { data, error } = await window.sb
+  return desc.descEng ||
+         desc.descWel ||
+         translations.en.noDesc;
+}
+
+const params =
+  new URLSearchParams(window.location.search);
+
+const id = params.get("id");
+
+async function loadSite() {
+
+  const t = translations[currentLang];
+
+  document.getElementById("langToggle")
+    .innerText =
+      currentLang === "en" ? "CY" : "EN";
+
+  document.getElementById("backBtn")
+    .innerText = t.back;
+
+  document.getElementById("imagesTitle")
+    .innerText = t.images;
+
+  document.getElementById("visitBtn")
+    .innerText = t.visit;
+
+  document.getElementById("shareBtn")
+    .innerText = t.share;
+
+  const { data } = await window.sb
     .from("sites")
     .select("*")
     .eq("site_id", parseInt(id))
     .single();
 
-  console.log("Supabase response:", data, error);
+  if (!data) return;
 
-  if (error || !data) {
-    document.body.innerHTML = "<h2>Site not found</h2>";
-    return;
-  }
+  const desc = getDescription(data);
 
-  let desc = {};
+  document.getElementById("name")
+    .innerText = data.name;
 
-  try {
-    desc = JSON.parse(data.description || "{}");
-  } catch {
-    desc = {};
-  }
+  document.getElementById("desc")
+    .innerText = getLocalizedDescription(data);
 
-  document.getElementById("name").innerText = data.name || "No name";
-  document.getElementById("desc").innerText = desc.descEng || "No description";
-  document.getElementById("extra").innerText =
-    "Holes: " + (desc.holeCount ?? "Unknown");
-  
+  document.getElementById("holesText")
+    .innerText =
+      `${desc.holeCount ?? "?"} ${t.holes}`;
+
+  document.getElementById("latlngText")
+    .innerText =
+      `${Number(data.latitude).toFixed(4)}, ${Number(data.longitude).toFixed(4)}`;
+
+  const lat = data.latitude;
+  const lng = data.longitude;
+
+  document.getElementById("googleMapsBtn").href =
+    `https://www.google.com/maps?q=${lat},${lng}`;
+
+  document.getElementById("allTrailsBtn").href =
+    `https://www.alltrails.com/explore/map/new?lat=${lat}&lng=${lng}`;
+
+  document.getElementById("shareBtn").onclick =
+    async () => {
+
+      const shareUrl =
+        `${window.location.origin}/site.html?id=${data.site_id}`;
+
+      if (navigator.share) {
+
+        await navigator.share({
+          title: data.name,
+          text: "Check out this rock cannon site",
+          url: shareUrl
+        });
+
+      } else {
+
+        await navigator.clipboard.writeText(shareUrl);
+
+        alert("Link copied!");
+      }
+    };
+
   loadPhotos(data.site_id);
 }
+
 async function loadPhotos(siteId) {
+
   const { data } = await window.sb
     .from("photos")
     .select("*")
     .eq("site_id", siteId);
 
-  const container = document.getElementById("photos");
+  const container =
+    document.getElementById("photos");
+
   container.innerHTML = "";
 
+  if (!data || data.length === 0) {
+
+    document.getElementById("heroImage")
+      .src =
+        "https://placehold.co/1200x600/111827/FFFFFF?text=No+Image";
+
+    return;
+  }
+
+  document.getElementById("heroImage")
+    .src = data[0].image_url;
+
   data.forEach(photo => {
+
     const img = document.createElement("img");
+
     img.src = photo.image_url;
-    img.style.width = "100%";
-    img.style.marginTop = "10px";
-    img.style.borderRadius = "10px";
+
+    img.onclick = () => {
+
+      document
+        .getElementById("lightbox")
+        .classList.add("active");
+
+      document
+        .getElementById("lightboxImg")
+        .src = photo.image_url;
+    };
 
     container.appendChild(img);
   });
 }
 
-loadSite();
+document
+  .getElementById("lightbox")
+  .onclick = () => {
+
+    document
+      .getElementById("lightbox")
+      .classList.remove("active");
+  };
+
+window.addEventListener("load", async () => {
+
+  if (!window.sb) {
+    console.error("Supabase failed to load");
+    return;
+  }
+
+  await loadSite();
+});
+
 </script>
 
 </body>
