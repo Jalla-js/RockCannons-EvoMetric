@@ -34,6 +34,7 @@
 
 <h1><button onclick="window.location.href='map.html'">Back to Map</button></h1>
 <script>
+  document.addEventListener("DOMContentLoaded", async () => {
     const role = await getUserRole();
 
 if (!role) {
@@ -111,7 +112,7 @@ if (role !== "contributor" && role !== "admin") {
 
   alert("Submitted for approval!");
   window.location.href = "map.html";
-});
+});});
 </script>
 <script>
 console.log("PAGE LOADED");

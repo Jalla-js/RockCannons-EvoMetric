@@ -1,6 +1,6 @@
 const map = L.map('map').setView([53.1, -4.1], 10);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   maxZoom: 19
 }).addTo(map);
 
@@ -36,17 +36,21 @@ function getDescription(site) {
   }
 }
 
+let activePopupSite = null;
+
 // 📍 open site panel
 function openSite(site) {
   const desc = getDescription(site);
 
   document.getElementById('popupTitle').innerText = site.name;
 
-  document.getElementById('popupDesc').innerText =
+  /*document.getElementById('popupDesc').innerText =
     (desc.descEng || "No description available") +
     (desc.holeCount !== undefined && desc.holeCount !== -1
       ? `\n\nHoles: ${desc.holeCount}`
-      : "");
+      : "");*/
+    document.getElementById("popupDesc").innerText =
+  getLocalizedDescription(site);
 
   map.flyTo([site.latitude, site.longitude], 15);
 }
@@ -135,11 +139,8 @@ function openPopup(site) {
   const desc = getDescription(site);
 
   document.getElementById("popupTitle").innerText = site.name;
-  document.getElementById("popupDesc").innerText =
-    desc.descEng || "No description";
-
-  document.getElementById("popupHole").innerText =
-    "Holes: " + (desc.holeCount ?? "Unknown");
+activePopupSite = site;
+renderPopup(site);
 
   (async () => {
     const { data: photos } = await window.sb
@@ -181,6 +182,27 @@ function closePopup() {
   document.getElementById("sitePopup").classList.add("hidden");
 }
 
+function renderPopup(site) {
+  if (!site) return;
+
+  const desc = getDescription(site);
+  const t = translations[currentLang];
+
+  document.getElementById("popupTitle").innerText = site.name;
+
+  document.getElementById("popupDesc").innerText =
+    getLocalizedDescription(site);
+
+  document.getElementById("popupHole").innerText =
+    `${t.holes} ${desc.holeCount ?? "Unknown"}`;
+
+  document.getElementById("openFullBtn").innerText = t.open;
+
+  // close button is inline HTML, so we fix it here too:
+  const closeBtn = document.querySelector("#sitePopup button[onclick]");
+  if (closeBtn) closeBtn.innerText = t.close;
+}
+
 // 🔁 live updates
 const searchInput = document.getElementById("searchInput");
 const filterHoles = document.getElementById("filterHoles");
@@ -197,14 +219,28 @@ if (filterHoles) {
 loadSites();
 
 let currentUser = null;
+let currentRole = null;
 
 async function loadUser() {
-  const { data: { user } } = await sb.auth.getUser();
 
   const btn = document.getElementById("userBtn");
 
+  if (!btn) {
+    console.error("userBtn not found");
+    return;
+  }
+
+  // Default logged out icon
+  btn.innerText = "👤";
+
+  const {
+  data: { session }
+} = await sb.auth.getSession();
+
+const user = session?.user || null;
+
+  // Not logged in
   if (!user) {
-    btn.innerText = "👤";
 
     btn.onclick = () => {
       window.location.href = "login.html";
@@ -213,44 +249,237 @@ async function loadUser() {
     return;
   }
 
-  const { data } = await sb
-    .from("users")
-    .select("display_name")
-    .eq("user_id", user.id)
-    .single();
-
   currentUser = user;
 
-  const initial = (data?.display_name || "U")[0].toUpperCase();
+  // Get display name + role
+  const { data, error } = await sb
+    .from("users")
+    .select("display_name, role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+  }
+
+  currentRole = data?.role || null;
+
+  // Set user initial
+  const initial = (
+    data?.display_name ||
+    user.email ||
+    "U"
+  )[0].toUpperCase();
+
   btn.innerText = initial;
 
   btn.onclick = toggleUserMenu;
 }
 
-function toggleUserMenu() {
+function toggleUserMenu(e) {
+
+  e?.stopPropagation();
+
   let existing = document.getElementById("userMenu");
 
+  // Toggle off
   if (existing) {
     existing.remove();
     return;
   }
 
-  const name = currentUser?.email || "User";
-
   const menu = document.createElement("div");
+
   menu.id = "userMenu";
   menu.className = "user-dropdown";
 
+  let adminButton = "";
+
+  // Admin-only review button
+  if (currentRole === "admin") {
+    adminButton = `
+      <button id="reviewBtn">Review Sites</button>
+    `;
+  }
+
   menu.innerHTML = `
-    <div class="name">${name}</div>
+    <div class="name">${currentUser?.email || "User"}</div>
+
+    <button id="addSiteBtn">Add Site</button>
+
+    ${adminButton}
+
     <button id="logoutBtn">Logout</button>
   `;
 
   document.body.appendChild(menu);
 
+  // Add Site
+  document.getElementById("addSiteBtn").onclick = () => {
+    window.location.href = "add.html";
+  };
+
+  // Admin review
+  if (currentRole === "admin") {
+    document.getElementById("reviewBtn").onclick = () => {
+      window.location.href = "admin.html";
+    };
+  }
+
+  // Logout
   document.getElementById("logoutBtn").onclick = async () => {
     await sb.auth.signOut();
     location.reload();
   };
 }
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+
+  const menu = document.getElementById("userMenu");
+  const btn = document.getElementById("userBtn");
+
+  if (
+    menu &&
+    !menu.contains(e.target) &&
+    !btn.contains(e.target)
+  ) {
+    menu.remove();
+  }
+});
+
+// Load user system
 loadUser();
+
+// Language options
+
+let currentLang =
+  localStorage.getItem("lang") ||
+  navigator.language.slice(0, 2) ||
+  "en";
+
+// fallback to English if unsupported language
+if (!["en", "cy"].includes(currentLang)) {
+  currentLang = "en";
+}
+
+let isSwitchingLang = false;
+function setLang(lang) {
+  if (isSwitchingLang || lang === currentLang) return;
+
+  isSwitchingLang = true;
+
+  const body = document.body;
+  body.classList.add("lang-fade-out");
+
+  setTimeout(() => {
+    currentLang = lang;
+    localStorage.setItem("lang", lang);
+
+    applyTranslations();
+    loadSites(); // refresh map text
+    if (activePopupSite) {
+  renderPopup(activePopupSite);
+}
+
+    body.classList.remove("lang-fade-out");
+    body.classList.add("lang-fade-in");
+
+    setTimeout(() => {
+      body.classList.remove("lang-fade-in");
+      isSwitchingLang = false;
+    }, 200);
+  }, 200);
+}
+
+function toggleLang() {
+  setLang(currentLang === "en" ? "cy" : "en");
+}
+
+const translations = {
+  en: {
+    search: "Search sites...",
+    filter: "Filter by hole count",
+    holes: "Holes:",
+    open: "Open full page",
+    close: "Close",
+    noDesc: "No description available",
+    noWelsh: "No Welsh translation available"
+  },
+  cy: {
+    search: "Chwilio safleoedd...",
+    filter: "Hidlo yn ôl tyllau",
+    holes: "Tyllau:",
+    open: "Agor tudalen llawn",
+    close: "Cau",
+    noDesc: "Dim disgrifiad ar gael",
+    noEnglish: "Dim cyfieithiad Cymraeg ar gael"
+  }
+};
+
+function getLocalizedDescription(site) {
+  const desc = getDescription(site);
+
+  const eng = desc.descEng?.trim();
+  const wel = desc.descWel?.trim();
+
+  // ENGLISH MODE
+  if (currentLang === "en") {
+
+    if (eng) return eng;
+
+    if (wel) {
+      return wel + "\n\n(No English translation available)";
+    }
+
+    return translations.en.noDesc;
+  }
+
+  // WELSH MODE
+  if (currentLang === "cy") {
+
+    if (wel) return wel;
+
+    if (eng) {
+      return eng + "\n\n(Dim cyfieithiad Cymraeg ar gael)";
+    }
+
+    return translations.cy.noDesc;
+  }
+
+  return translations.en.noDesc;
+}
+
+function applyTranslations() {
+  const t = translations[currentLang];
+
+  const search = document.getElementById("searchInput");
+  if (search) search.placeholder = t.search;
+
+  const filter = document.getElementById("filterHoles");
+  if (filter) filter.options[0].text = t.filter;
+
+  const btn = document.getElementById("langToggle");
+  if (btn) btn.innerText = currentLang === "en" ? "CY" : "EN";
+}
+
+function initLanguageButton() {
+  const btn = document.getElementById("langToggle");
+
+  if (!btn) {
+    console.error("langToggle button not found");
+    return;
+  }
+
+  btn.innerText = currentLang === "en" ? "CY" : "EN";
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    toggleLang();
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  applyTranslations();
+  initLanguageButton();
+});
