@@ -19,11 +19,11 @@
   <input id="lat" placeholder="Latitude" required />
   <input id="lng" placeholder="Longitude" required />
 
-  <!-- 🧠 DESCRIPTION FIELD -->
+  <!-- DESCRIPTION FIELD -->
   <textarea id="descEng" placeholder="Description (English)" required></textarea>
   <textarea id="descWel" placeholder="Description (Welsh)"></textarea>
 
-  <!-- 🕳️ HOLE COUNT FIELD -->
+  <!-- HOLE COUNT FIELD -->
   <input id="holeCount" type="number" placeholder="Hole count (optional)" />
   <input type="file" id="imageUpload" multiple accept="image/*">
   <button type="submit">Add Site</button>
@@ -55,7 +55,7 @@ if (role !== "contributor" && role !== "admin") {
   let holeCount = document.getElementById('holeCount').value;
   holeCount = holeCount === "" ? -1 : parseInt(holeCount);
 
-  // 1️⃣ CREATE SITE FIRST
+  // CREATE SITE FIRST
   const { data: siteData, error: siteError } = await sb
     .from("sites")
     .insert([{
@@ -82,7 +82,7 @@ if (role !== "contributor" && role !== "admin") {
 
   const siteId = siteData.site_id;
 
-  // 2️⃣ UPLOAD IMAGES
+  // UPLOAD IMAGES
   const files = document.getElementById("imageUpload").files;
 
   for (let file of files) {
@@ -102,7 +102,7 @@ if (role !== "contributor" && role !== "admin") {
       .from("site-images")
       .getPublicUrl(fileName);
 
-    // 3️⃣ SAVE TO PHOTOS TABLE
+    // SAVE TO PHOTOS TABLE
     await sb.from("photos").insert([{
       site_id: siteId,
       image_url: data.publicUrl,

@@ -1,6 +1,6 @@
 console.log("DB LOADED");
 
-// ✅ Prevent duplicate client creation safely
+// Prevent duplicate client creation safely
 window.sb =
   window.sb ||
   window.supabase.createClient(

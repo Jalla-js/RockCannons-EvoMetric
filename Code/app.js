@@ -8,7 +8,7 @@ var CartoDB_Voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles
 
 let markers = L.layerGroup().addTo(map);
 
-// 🎨 marker colours based on status
+// marker colours based on status
 function getStyle(status) {
   if (status === "approved") {
     return {
@@ -29,7 +29,7 @@ function getStyle(status) {
   }
 }
 
-// 🧠 SAFE JSON PARSE (IMPORTANT FIX)
+// SAFE JSON PARSE (IMPORTANT FIX)
 function getDescription(site) {
   try {
     return site.description ? JSON.parse(site.description) : {};
@@ -40,7 +40,7 @@ function getDescription(site) {
 
 let activePopupSite = null;
 
-// 📍 open site panel
+// open site panel
 function openSite(site) {
   const desc = getDescription(site);
 
@@ -57,7 +57,7 @@ function openSite(site) {
   map.flyTo([site.latitude, site.longitude], 15);
 }
 
-// 📦 load + filter + search
+// load + filter + search
 async function loadSites() {
   markers.clearLayers();
 
@@ -66,8 +66,7 @@ async function loadSites() {
   const search =
     document.getElementById("searchInput")?.value.toLowerCase() || "";
 
-  const holeFilter =
-    document.getElementById("filterHoles")?.value || "";
+  const holeFilter = document.getElementById("filterHoles")?.value || "";
 
   data.forEach(site => {
 
@@ -79,7 +78,7 @@ async function loadSites() {
     const descWel = (desc.descWel || "").toLowerCase();
     const holeCount = desc.holeCount ?? -1;
 
-    // 🔍 SEARCH (name + both descriptions)
+    // SEARCH (name + both descriptions)
     if (
       search &&
       !site.name.toLowerCase().includes(search) &&
@@ -89,16 +88,10 @@ async function loadSites() {
       return;
     }
 
-    // 🕳️ HOLE FILTER (FIXED LOGIC)
+    // HOLE FILTER
     if (holeFilter) {
-
-      if (holeFilter === "4") {
-        // 4+ holes
-        if (holeCount === -1 || holeCount < 4) return;
-      } else {
-        // exact match
-        if (holeCount !== parseInt(holeFilter)) return;
-      }
+      if (parseInt(holeFilter) <= 11){
+        if (!(holeCount > (parseInt(holeFilter)-4) && holeCount < parseInt(holeFilter))) return;}
     }
 
     const marker = L.circleMarker(
@@ -205,7 +198,7 @@ function renderPopup(site) {
   if (closeBtn) closeBtn.innerText = t.close;
 }
 
-// 🔁 live updates
+// live updates
 const searchInput = document.getElementById("searchInput");
 const filterHoles = document.getElementById("filterHoles");
 
@@ -217,7 +210,7 @@ if (filterHoles) {
   filterHoles.addEventListener("change", loadSites);
 }
 
-// 🚀 initial load
+// initial load
 loadSites();
 
 let currentUser = null;
